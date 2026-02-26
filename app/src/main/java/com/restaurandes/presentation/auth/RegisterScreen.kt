@@ -9,17 +9,42 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(
     onNavigateToLogin: () -> Unit,
-    onRegisterSuccess: () -> Unit
+    onRegisterSuccess: () -> Unit,
+    viewModel: RegisterViewModel = hiltViewModel()
 ) {
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+    
+    val uiState by viewModel.uiState.collectAsState()
+    
+    // Navigate on success
+    LaunchedEffect(uiState.isSuccess) {
+        if (uiState.isSuccess) {
+            onRegisterSuccess()
+        }
+    }
+    
+    // Show error dialog
+    if (uiState.error != null) {
+        AlertDialog(
+            onDismissRequest = { viewModel.clearError() },
+            title = { Text("Error") },
+            text = { Text(uiState.error ?: "") },
+            confirmButton = {
+                TextButton(onClick = { viewModel.clearError() }) {
+                    Text("OK")
+                }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -91,14 +116,20 @@ fun RegisterScreen(
 
             Button(
                 onClick = {
-                    // TODO: Implement actual registration
-                    onRegisterSuccess()
+                    viewModel.register(name, email, password, confirmPassword)
                 },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = name.isNotBlank() && email.isNotBlank() && 
-                         password.isNotBlank() && password == confirmPassword
+                         password.isNotBlank() && password == confirmPassword && !uiState.isLoading
             ) {
-                Text("Register")
+                if (uiState.isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    Text("Register")
+                }
             }
         }
     }

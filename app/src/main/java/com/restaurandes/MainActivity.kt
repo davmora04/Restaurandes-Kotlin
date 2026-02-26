@@ -32,7 +32,7 @@ class MainActivity : ComponentActivity() {
                     val navController = rememberNavController()
                     NavigationGraph(
                         navController = navController,
-                        startDestination = Screen.Home.route // Change to Screen.Login.route for auth flow
+                        startDestination = Screen.Login.route
                     )
                 }
             }

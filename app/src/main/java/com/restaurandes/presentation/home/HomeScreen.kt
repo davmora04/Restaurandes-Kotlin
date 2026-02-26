@@ -12,11 +12,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.restaurandes.presentation.utils.hasLocationPermission
+import com.restaurandes.presentation.utils.rememberLocationPermissionState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,6 +32,35 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    
+    var showPermissionDialog by remember { mutableStateOf(false) }
+    
+    // Location permission handler
+    val locationPermissionState = rememberLocationPermissionState(
+        onPermissionGranted = {
+            viewModel.filterRestaurants(FilterType.Nearby)
+        },
+        onPermissionDenied = {
+            showPermissionDialog = true
+        }
+    )
+    
+    // Permission denied dialog
+    if (showPermissionDialog) {
+        AlertDialog(
+            onDismissRequest = { showPermissionDialog = false },
+            title = { Text("Permiso de Ubicación Requerido") },
+            text = { 
+                Text("Para mostrar restaurantes cercanos, necesitamos acceso a tu ubicación. Por favor, habilita el permiso en la configuración de la app.")
+            },
+            confirmButton = {
+                TextButton(onClick = { showPermissionDialog = false }) {
+                    Text("OK")
+                }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -81,7 +113,18 @@ fun HomeScreen(
             // Filter chips
             FilterChipsRow(
                 selectedFilter = uiState.selectedFilter,
-                onFilterSelected = { viewModel.filterRestaurants(it) },
+                onFilterSelected = { filterType ->
+                    // Check for location permission if Nearby filter is selected
+                    if (filterType == FilterType.Nearby) {
+                        if (context.hasLocationPermission()) {
+                            viewModel.filterRestaurants(filterType)
+                        } else {
+                            locationPermissionState.requestPermission()
+                        }
+                    } else {
+                        viewModel.filterRestaurants(filterType)
+                    }
+                },
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
