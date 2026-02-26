@@ -1,6 +1,7 @@
 package com.restaurandes.di
 
 import android.content.Context
+import com.restaurandes.data.analytics.AnalyticsService
 import com.restaurandes.data.remote.api.RestaurantApi
 import com.restaurandes.data.repository.LocationRepositoryImpl
 import com.restaurandes.data.repository.RestaurantRepositoryImpl
@@ -57,14 +58,20 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideAnalyticsService(): AnalyticsService {
+        return AnalyticsService()
+    }
+
+    @Provides
+    @Singleton
     fun provideRestaurantRepository(api: RestaurantApi): RestaurantRepository {
         return RestaurantRepositoryImpl(api)
     }
 
     @Provides
     @Singleton
-    fun provideUserRepository(): UserRepository {
-        return UserRepositoryImpl()
+    fun provideUserRepository(analyticsService: AnalyticsService): UserRepository {
+        return UserRepositoryImpl(analyticsService)
     }
 
     @Provides

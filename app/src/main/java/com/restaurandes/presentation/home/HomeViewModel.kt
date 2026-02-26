@@ -2,6 +2,7 @@ package com.restaurandes.presentation.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.restaurandes.data.analytics.AnalyticsService
 import com.restaurandes.domain.model.Restaurant
 import com.restaurandes.domain.usecase.GetNearbyRestaurantsUseCase
 import com.restaurandes.domain.usecase.GetRestaurantsUseCase
@@ -16,7 +17,8 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val getRestaurantsUseCase: GetRestaurantsUseCase,
-    private val getNearbyRestaurantsUseCase: GetNearbyRestaurantsUseCase
+    private val getNearbyRestaurantsUseCase: GetNearbyRestaurantsUseCase,
+    private val analyticsService: AnalyticsService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -24,6 +26,8 @@ class HomeViewModel @Inject constructor(
 
     init {
         loadRestaurants()
+        // Track BQ2: Home section view
+        analyticsService.logSectionView(AnalyticsService.AppSection.HOME, null)
     }
 
     fun loadRestaurants() {
@@ -83,6 +87,14 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(selectedFilter = filterType) }
             
+            // Track BQ2: Filter interaction
+            analyticsService.logFilterUsed(filterType.name, null)
+            analyticsService.logSectionInteraction(
+                AnalyticsService.AppSection.HOME,
+                "filter_${filterType.name.lowercase()}",
+                null
+            )
+            
             when (filterType) {
                 FilterType.All -> loadRestaurants()
                 FilterType.Nearby -> loadNearbyRestaurants()
@@ -91,6 +103,11 @@ class HomeViewModel @Inject constructor(
                 FilterType.Economic -> filterByPrice()
             }
         }
+    }
+    
+    fun onRestaurantClick(restaurantId: String, restaurantName: String) {
+        // Track BQ3: Restaurant view
+        analyticsService.logRestaurantView(restaurantId, restaurantName, null)
     }
 
     private fun filterByOpen() {

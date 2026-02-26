@@ -4,7 +4,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.dagger.hilt.android")
     id("kotlin-kapt")
-    // id("com.google.gms.google-services") // TODO: Uncomment after adding google-services.json
+    id("com.google.gms.google-services")
 }
 
 android {
