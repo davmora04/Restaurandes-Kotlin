@@ -49,16 +49,94 @@ cd Restaurandes-Kotlin
 app/
 ├── src/
 │   ├── main/
-│   │   ├── java/com/unieats/
-│   │   │   ├── data/          # Data layer
-│   │   │   ├── domain/        # Business logic
-│   │   │   ├── ui/            # UI components
+│   │   ├── java/com/restaurandes/
+│   │   │   ├── data/                  # Data layer
+│   │   │   │   ├── remote/            # API interfaces & DTOs
+│   │   │   │   └── repository/        # Repository implementations
+│   │   │   ├── domain/                # Business logic
+│   │   │   │   ├── model/             # Domain models
+│   │   │   │   ├── repository/        # Repository interfaces
+│   │   │   │   └── usecase/           # Use cases
+│   │   │   ├── presentation/          # UI layer
+│   │   │   │   ├── auth/              # Login/Register screens
+│   │   │   │   ├── home/              # Home screen
+│   │   │   │   ├── detail/            # Restaurant detail
+│   │   │   │   ├── map/               # Map view
+│   │   │   │   ├── search/            # Search screen
+│   │   │   │   ├── favorites/         # Favorites screen
+│   │   │   │   ├── profile/           # Profile screen
+│   │   │   │   └── navigation/        # Navigation graph
+│   │   │   ├── di/                    # Dependency injection
+│   │   │   ├── ui/theme/              # Material 3 theme
+│   │   │   ├── RestaurandesApplication.kt
 │   │   │   └── MainActivity.kt
-│   │   ├── res/               # Resources
+│   │   ├── res/                       # Resources
 │   │   └── AndroidManifest.xml
-│   └── test/                  # Unit tests
+│   └── test/                          # Unit tests
 └── build.gradle.kts
 ```
+
+## Architecture
+
+### Clean Architecture Layers
+
+**Domain Layer** (Business Logic)
+- Pure Kotlin modules, framework-independent
+- Models: `Restaurant`, `User`, `Review`, `Location`
+- Repository interfaces defining contracts
+- Use cases encapsulating business rules
+
+**Data Layer** (Data Sources)
+- Repository implementations
+- Remote data sources (Retrofit API)
+- Local data sources (to be implemented)
+- DTOs and mappers
+
+**Presentation Layer** (UI)
+- MVVM pattern with Jetpack Compose
+- ViewModels managing UI state
+- Composable functions for UI
+- Navigation component
+
+### Dependencies
+- **Dagger Hilt**: Dependency injection
+- **Retrofit**: REST API client
+- **Coil**: Image loading
+- **Google Play Services**: Location services
+- **Firebase** (to be configured): Analytics, Auth, Firestore
+
+## Current Implementation Status
+
+### ✅ Completed
+- Clean Architecture structure
+- Domain models and repository interfaces
+- Use cases for core features
+- Data layer with mock implementations
+- Home screen with restaurant listing
+- Filter system (All, Nearby, Open, Top Rated, Economic)
+- Login/Register screens
+- Navigation graph
+- Bottom navigation
+- Location repository with GPS sensor
+
+### 🚧 In Progress
+- Firebase integration (Analytics, Auth, Firestore)
+- Remaining screen implementations
+- Analytics tracking for BQs
+
+### 📋 To Do
+- Complete all screen implementations
+- Implement smart recommendation features
+- Add real backend API
+- Complete authentication flow
+- Implement analytics pipeline
+- Document architecture diagrams
+
+## Business Questions (Sprint 2)
+
+1. **BQ1 - Type 1 (Telemetry)**: Weekly active users count
+2. **BQ2 - Type 2 (UX)**: Section interaction analytics
+3. **BQ3 - Type 3 (Feature)**: Restaurant view to favorite conversion rate
 
 ## Team
 - Grupo 22 - Móviles
