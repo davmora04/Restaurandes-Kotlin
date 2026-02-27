@@ -162,17 +162,17 @@ private fun RestaurantDetailContent(
 
             // Status Badge
             Surface(
-                color = if (restaurant.isOpen) 
+                color = if (restaurant.isCurrentlyOpen()) 
                     MaterialTheme.colorScheme.primaryContainer 
                 else 
                     MaterialTheme.colorScheme.errorContainer,
                 shape = MaterialTheme.shapes.small
             ) {
                 Text(
-                    text = if (restaurant.isOpen) "Abierto" else "Cerrado",
+                    text = if (restaurant.isCurrentlyOpen()) "Abierto" else "Cerrado",
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                     style = MaterialTheme.typography.labelMedium,
-                    color = if (restaurant.isOpen) 
+                    color = if (restaurant.isCurrentlyOpen()) 
                         MaterialTheme.colorScheme.onPrimaryContainer 
                     else 
                         MaterialTheme.colorScheme.onErrorContainer

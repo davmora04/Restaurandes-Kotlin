@@ -260,9 +260,9 @@ private fun SearchResultCard(
                     Text("•", style = MaterialTheme.typography.bodySmall)
                     
                     Text(
-                        text = if (restaurant.isOpen) "Abierto" else "Cerrado",
+                        text = if (restaurant.isCurrentlyOpen()) "Abierto" else "Cerrado",
                         style = MaterialTheme.typography.bodySmall,
-                        color = if (restaurant.isOpen) 
+                        color = if (restaurant.isCurrentlyOpen()) 
                             MaterialTheme.colorScheme.primary 
                         else 
                             MaterialTheme.colorScheme.error

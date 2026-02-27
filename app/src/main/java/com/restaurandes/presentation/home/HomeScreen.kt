@@ -282,7 +282,7 @@ fun RestaurantCard(
                         fontWeight = FontWeight.Medium
                     )
                     
-                    if (restaurant.isOpen) {
+                    if (restaurant.isCurrentlyOpen()) {
                         Text(
                             text = "Open",
                             style = MaterialTheme.typography.bodySmall,
