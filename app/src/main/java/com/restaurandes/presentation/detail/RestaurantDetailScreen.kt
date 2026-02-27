@@ -13,7 +13,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -109,7 +109,13 @@ private fun RestaurantDetailContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(250.dp),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.Crop,
+            error = androidx.compose.ui.graphics.painter.ColorPainter(
+                androidx.compose.ui.graphics.Color.Gray
+            ),
+            placeholder = androidx.compose.ui.graphics.painter.ColorPainter(
+                androidx.compose.ui.graphics.Color.LightGray
+            )
         )
 
         Column(

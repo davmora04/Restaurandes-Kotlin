@@ -1,6 +1,7 @@
 package com.restaurandes.di
 
 import android.content.Context
+import com.google.firebase.firestore.FirebaseFirestore
 import com.restaurandes.data.analytics.AnalyticsService
 import com.restaurandes.data.remote.api.RestaurantApi
 import com.restaurandes.data.repository.LocationRepositoryImpl
@@ -64,8 +65,17 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideRestaurantRepository(api: RestaurantApi): RestaurantRepository {
-        return RestaurantRepositoryImpl(api)
+    fun provideFirebaseFirestore(): FirebaseFirestore {
+        return FirebaseFirestore.getInstance()
+    }
+
+    @Provides
+    @Singleton
+    fun provideRestaurantRepository(
+        api: RestaurantApi,
+        firestore: FirebaseFirestore
+    ): RestaurantRepository {
+        return RestaurantRepositoryImpl(api, firestore)
     }
 
     @Provides

@@ -17,7 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import com.restaurandes.presentation.utils.hasLocationPermission
 import com.restaurandes.presentation.utils.rememberLocationPermissionState
 
@@ -218,7 +218,19 @@ fun RestaurantCard(
                 contentDescription = restaurant.name,
                 modifier = Modifier
                     .size(80.dp),
-                contentScale = ContentScale.Crop
+                contentScale = ContentScale.Crop,
+                error = androidx.compose.ui.graphics.painter.ColorPainter(
+                    androidx.compose.ui.graphics.Color.LightGray
+                ),
+                placeholder = androidx.compose.ui.graphics.painter.ColorPainter(
+                    androidx.compose.ui.graphics.Color.LightGray
+                ),
+                onError = { error ->
+                    android.util.Log.e("HomeScreen", "Image load error: ${restaurant.imageUrl}", error.result.throwable)
+                },
+                onSuccess = {
+                    android.util.Log.d("HomeScreen", "Image loaded: ${restaurant.imageUrl}")
+                }
             )
             
             Spacer(modifier = Modifier.width(12.dp))
