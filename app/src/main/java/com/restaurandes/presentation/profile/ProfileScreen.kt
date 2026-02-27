@@ -49,7 +49,10 @@ fun ProfileScreen(
                     
                     // User info card
                     Card(
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = androidx.compose.material3.CardDefaults.cardColors(
+                            containerColor = androidx.compose.ui.graphics.Color.White
+                        )
                     ) {
                         Column(
                             modifier = Modifier.padding(16.dp),
