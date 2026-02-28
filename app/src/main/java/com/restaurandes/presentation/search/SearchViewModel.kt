@@ -32,6 +32,8 @@ class SearchViewModel @Inject constructor(
 
     init {
         loadAllRestaurants()
+        // Track BQ2: Search section view
+        analyticsService.logSectionView(AnalyticsService.AppSection.SEARCH, null)
     }
 
     private fun loadAllRestaurants() {

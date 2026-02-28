@@ -2,6 +2,7 @@ package com.restaurandes.presentation.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.restaurandes.data.analytics.AnalyticsService
 import com.restaurandes.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,7 +19,8 @@ data class RegisterUiState(
 
 @HiltViewModel
 class RegisterViewModel @Inject constructor(
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val analyticsService: AnalyticsService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(RegisterUiState())
@@ -59,7 +61,8 @@ class RegisterViewModel @Inject constructor(
             try {
                 val result = userRepository.signUp(cleanEmail, cleanPassword, cleanName)
                 result.fold(
-                    onSuccess = {
+                    onSuccess = { user ->
+                        // Analytics handled by repository
                         _uiState.value = RegisterUiState(isSuccess = true)
                     },
                     onFailure = { error ->

@@ -2,6 +2,7 @@ package com.restaurandes.presentation.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.restaurandes.data.analytics.AnalyticsService
 import com.restaurandes.domain.model.User
 import com.restaurandes.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,7 +19,8 @@ data class ProfileUiState(
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val analyticsService: AnalyticsService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState())
@@ -26,6 +28,8 @@ class ProfileViewModel @Inject constructor(
 
     init {
         loadUserProfile()
+        // Track BQ2: Profile section view
+        analyticsService.logSectionView(AnalyticsService.AppSection.PROFILE, null)
     }
 
     private fun loadUserProfile() {
