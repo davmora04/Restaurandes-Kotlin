@@ -12,14 +12,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
-import com.restaurandes.presentation.utils.hasLocationPermission
-import com.restaurandes.presentation.utils.rememberLocationPermissionState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,35 +29,6 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val context = LocalContext.current
-    
-    var showPermissionDialog by remember { mutableStateOf(false) }
-    
-    // Location permission handler
-    val locationPermissionState = rememberLocationPermissionState(
-        onPermissionGranted = {
-            viewModel.filterRestaurants(FilterType.Nearby)
-        },
-        onPermissionDenied = {
-            showPermissionDialog = true
-        }
-    )
-    
-    // Permission denied dialog
-    if (showPermissionDialog) {
-        AlertDialog(
-            onDismissRequest = { showPermissionDialog = false },
-            title = { Text("Permiso de Ubicación Requerido") },
-            text = { 
-                Text("Para mostrar restaurantes cercanos, necesitamos acceso a tu ubicación. Por favor, habilita el permiso en la configuración de la app.")
-            },
-            confirmButton = {
-                TextButton(onClick = { showPermissionDialog = false }) {
-                    Text("OK")
-                }
-            }
-        )
-    }
 
     Scaffold(
         topBar = {
@@ -143,18 +111,10 @@ fun HomeScreen(
         ) {
             // Filter chips
             FilterChipsRow(
-                selectedFilter = uiState.selectedFilter,
-                onFilterSelected = { filterType ->
-                    // Check for location permission if Nearby filter is selected
-                    if (filterType == FilterType.Nearby) {
-                        if (context.hasLocationPermission()) {
-                            viewModel.filterRestaurants(filterType)
-                        } else {
-                            locationPermissionState.requestPermission()
-                        }
-                    } else {
-                        viewModel.filterRestaurants(filterType)
-                    }
+                selectedCategory = uiState.selectedCategory,
+                availableCategories = uiState.availableCategories,
+                onCategorySelected = { category ->
+                    viewModel.filterByCategory(category)
                 },
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
@@ -190,19 +150,23 @@ fun HomeScreen(
 
 @Composable
 fun FilterChipsRow(
-    selectedFilter: FilterType,
-    onFilterSelected: (FilterType) -> Unit,
+    selectedCategory: String,
+    availableCategories: List<String>,
+    onCategorySelected: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // Build filter list: core filters + dynamic categories
+    val allFilters = listOf("All", "Open", "TopRated") + availableCategories
+    
     LazyRow(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        items(FilterType.entries) { filter ->
+        items(allFilters) { category ->
             FilterChip(
-                selected = selectedFilter == filter,
-                onClick = { onFilterSelected(filter) },
-                label = { Text(filter.name) },
+                selected = selectedCategory == category,
+                onClick = { onCategorySelected(category) },
+                label = { Text(category) },
                 colors = androidx.compose.material3.FilterChipDefaults.filterChipColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                     labelColor = MaterialTheme.colorScheme.onSurface,
@@ -211,7 +175,7 @@ fun FilterChipsRow(
                 ),
                 border = androidx.compose.material3.FilterChipDefaults.filterChipBorder(
                     enabled = true,
-                    selected = selectedFilter == filter,
+                    selected = selectedCategory == category,
                     borderColor = MaterialTheme.colorScheme.outline,
                     selectedBorderColor = MaterialTheme.colorScheme.primary
                 )

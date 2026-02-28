@@ -36,10 +36,15 @@ class HomeViewModel @Inject constructor(
             
             getRestaurantsUseCase().fold(
                 onSuccess = { restaurants ->
+                    // Extract unique categories
+                    val categories = restaurants.map { it.category }.distinct().sorted()
+                    
                     _uiState.update {
                         it.copy(
                             isLoading = false,
                             restaurants = restaurants,
+                            allRestaurants = restaurants,
+                            availableCategories = categories,
                             error = null
                         )
                     }
@@ -62,12 +67,17 @@ class HomeViewModel @Inject constructor(
             
             getNearbyRestaurantsUseCase(radiusKm = 5.0).fold(
                 onSuccess = { restaurants ->
+                    // Extract unique categories
+                    val categories = restaurants.map { it.category }.distinct().sorted()
+                    
                     _uiState.update {
                         it.copy(
                             isLoading = false,
                             restaurants = restaurants,
+                            allRestaurants = restaurants,
+                            availableCategories = categories,
                             error = null,
-                            selectedFilter = FilterType.Nearby
+                            selectedCategory = "Nearby"
                         )
                     }
                 },
@@ -83,48 +93,33 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun filterRestaurants(filterType: FilterType) {
+    fun filterByCategory(category: String) {
         viewModelScope.launch {
-            _uiState.update { it.copy(selectedFilter = filterType) }
+            _uiState.update { it.copy(selectedCategory = category) }
             
             // Track BQ2: Filter interaction
-            analyticsService.logFilterUsed(filterType.name, null)
+            analyticsService.logFilterUsed(category, null)
             analyticsService.logSectionInteraction(
                 AnalyticsService.AppSection.HOME,
-                "filter_${filterType.name.lowercase()}",
+                "filter_$category",
                 null
             )
             
-            when (filterType) {
-                FilterType.All -> loadRestaurants()
-                FilterType.Nearby -> loadNearbyRestaurants()
-                FilterType.Open -> filterByOpen()
-                FilterType.TopRated -> filterByRating()
-                FilterType.Economic -> filterByPrice()
+            val allRestaurants = _uiState.value.allRestaurants
+            
+            val filtered = when (category) {
+                "All" -> allRestaurants
+                "Open" -> allRestaurants.filter { it.isCurrentlyOpen() }
+                "TopRated" -> allRestaurants.sortedByDescending { it.rating }
+                else -> allRestaurants.filter { it.category == category }
             }
+            
+            _uiState.update { it.copy(restaurants = filtered) }
         }
     }
     
     fun onRestaurantClick(restaurantId: String, restaurantName: String) {
         // Track BQ3: Restaurant view
         analyticsService.logRestaurantView(restaurantId, restaurantName, null)
-    }
-
-    private fun filterByOpen() {
-        val currentRestaurants = _uiState.value.restaurants
-        val filtered = currentRestaurants.filter { it.isOpen }
-        _uiState.update { it.copy(restaurants = filtered) }
-    }
-
-    private fun filterByRating() {
-        val currentRestaurants = _uiState.value.restaurants
-        val sorted = currentRestaurants.sortedByDescending { it.rating }
-        _uiState.update { it.copy(restaurants = sorted) }
-    }
-
-    private fun filterByPrice() {
-        val currentRestaurants = _uiState.value.restaurants
-        val sorted = currentRestaurants.sortedBy { it.priceRange }
-        _uiState.update { it.copy(restaurants = sorted) }
     }
 }
