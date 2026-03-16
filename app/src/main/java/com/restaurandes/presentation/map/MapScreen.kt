@@ -27,7 +27,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,14 +41,15 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
@@ -62,17 +62,19 @@ fun MapScreen(
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
     val fineLocationPermission = rememberPermissionState(
         permission = Manifest.permission.ACCESS_FINE_LOCATION
     )
 
-    val bogota = LatLng(4.7110, -74.0721)
+    // Centro por defecto: Uniandes
+    val uniandes = LatLng(4.6019, -74.0661)
     val cameraPositionState = rememberCameraPositionState()
-    val scope = rememberCoroutineScope()
 
     var userLatLng by remember { mutableStateOf<LatLng?>(null) }
     var locationMessage by remember { mutableStateOf<String?>(null) }
     var isLocatingUser by remember { mutableStateOf(true) }
+    var hasAdjustedCamera by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         if (!fineLocationPermission.status.isGranted) {
@@ -80,13 +82,11 @@ fun MapScreen(
         }
     }
 
+    // Obtiene ubicación del usuario, pero NO centra automáticamente ahí
     LaunchedEffect(fineLocationPermission.status.isGranted) {
         if (!fineLocationPermission.status.isGranted) {
             isLocatingUser = false
-            locationMessage = "Permiso de ubicación no concedido. Te muestro Bogotá por defecto."
-            cameraPositionState.animate(
-                update = CameraUpdateFactory.newLatLngZoom(bogota, 12f)
-            )
+            locationMessage = "Mostrando restaurantes cerca de Uniandes."
             return@LaunchedEffect
         }
 
@@ -96,37 +96,54 @@ fun MapScreen(
                 fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null).await()
 
             if (location != null) {
-                val latLng = LatLng(location.latitude, location.longitude)
-                userLatLng = latLng
-                cameraPositionState.animate(
-                    update = CameraUpdateFactory.newLatLngZoom(latLng, 15f)
-                )
+                userLatLng = LatLng(location.latitude, location.longitude)
             } else {
-                locationMessage = "No pude obtener tu ubicación. Te muestro Bogotá por defecto."
-                cameraPositionState.animate(
-                    update = CameraUpdateFactory.newLatLngZoom(bogota, 12f)
-                )
+                locationMessage = "No pude obtener tu ubicación. Mostrando restaurantes cerca de Uniandes."
             }
         } catch (_: Exception) {
-            locationMessage = "Error obteniendo ubicación. Te muestro Bogotá por defecto."
-            cameraPositionState.animate(
-                update = CameraUpdateFactory.newLatLngZoom(bogota, 12f)
-            )
+            locationMessage = "Error obteniendo ubicación. Mostrando restaurantes cerca de Uniandes."
         } finally {
             isLocatingUser = false
         }
     }
 
-    LaunchedEffect(uiState.restaurants) {
-        if (userLatLng == null && uiState.restaurants.isNotEmpty() && !isLocatingUser) {
-            val firstRestaurant = uiState.restaurants.first()
-            cameraPositionState.animate(
-                update = CameraUpdateFactory.newLatLngZoom(
-                    LatLng(firstRestaurant.latitude, firstRestaurant.longitude),
-                    13f
+    // Ajusta la cámara a los restaurantes; si no hay, centra en Uniandes
+    LaunchedEffect(uiState.restaurants, isLocatingUser) {
+        if (hasAdjustedCamera || isLocatingUser) return@LaunchedEffect
+
+        val validRestaurants = uiState.restaurants.filter {
+            it.latitude != 0.0 && it.longitude != 0.0
+        }
+
+        if (validRestaurants.isNotEmpty()) {
+            if (validRestaurants.size == 1) {
+                val restaurant = validRestaurants.first()
+                cameraPositionState.animate(
+                    update = CameraUpdateFactory.newLatLngZoom(
+                        LatLng(restaurant.latitude, restaurant.longitude),
+                        16f
+                    )
                 )
+            } else {
+                val boundsBuilder = LatLngBounds.Builder()
+
+                validRestaurants.forEach { restaurant ->
+                    boundsBuilder.include(LatLng(restaurant.latitude, restaurant.longitude))
+                }
+
+                val bounds = boundsBuilder.build()
+
+                cameraPositionState.animate(
+                    update = CameraUpdateFactory.newLatLngBounds(bounds, 140)
+                )
+            }
+        } else {
+            cameraPositionState.animate(
+                update = CameraUpdateFactory.newLatLngZoom(uniandes, 15f)
             )
         }
+
+        hasAdjustedCamera = true
     }
 
     Scaffold(
@@ -164,13 +181,16 @@ fun MapScreen(
                 )
             ) {
                 uiState.restaurants.forEach { restaurant ->
-                    if (restaurant.latitude != 0.0 || restaurant.longitude != 0.0) {
+                    if (restaurant.latitude != 0.0 && restaurant.longitude != 0.0) {
                         Marker(
                             state = MarkerState(
                                 position = LatLng(restaurant.latitude, restaurant.longitude)
                             ),
                             title = restaurant.name,
                             snippet = "${restaurant.category} • ${restaurant.rating}",
+                            icon = BitmapDescriptorFactory.defaultMarker(
+                                getMarkerColor(restaurant.category)
+                            ),
                             onClick = {
                                 onNavigateToDetail(restaurant.id)
                                 false
@@ -182,7 +202,10 @@ fun MapScreen(
                 userLatLng?.let { latLng ->
                     Marker(
                         state = MarkerState(position = latLng),
-                        title = "Tu ubicación"
+                        title = "Tu ubicación",
+                        icon = BitmapDescriptorFactory.defaultMarker(
+                            BitmapDescriptorFactory.HUE_AZURE
+                        )
                     )
                 }
             }
@@ -240,6 +263,20 @@ fun MapScreen(
                 }
             }
         }
+    }
+}
+
+private fun getMarkerColor(category: String): Float {
+    return when (category.trim().lowercase()) {
+        "americana" -> BitmapDescriptorFactory.HUE_RED
+        "casero" -> BitmapDescriptorFactory.HUE_ORANGE
+        "colombiana" -> BitmapDescriptorFactory.HUE_YELLOW
+        "cafetería", "cafe", "café" -> BitmapDescriptorFactory.HUE_AZURE
+        "postres" -> BitmapDescriptorFactory.HUE_VIOLET
+        "italiana" -> BitmapDescriptorFactory.HUE_GREEN
+        "mexicana" -> BitmapDescriptorFactory.HUE_ROSE
+        "asiática", "asiatica", "japonesa" -> BitmapDescriptorFactory.HUE_CYAN
+        else -> BitmapDescriptorFactory.HUE_MAGENTA
     }
 }
 
