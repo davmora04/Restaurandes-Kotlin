@@ -9,9 +9,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.restaurandes.presentation.auth.LoginScreen
 import com.restaurandes.presentation.auth.RegisterScreen
+import com.restaurandes.presentation.detail.RestaurantDetailScreen
 import com.restaurandes.presentation.favorites.FavoritesScreen
 import com.restaurandes.presentation.home.HomeScreen
-import com.restaurandes.presentation.detail.RestaurantDetailScreen
 import com.restaurandes.presentation.map.MapScreen
 import com.restaurandes.presentation.profile.ProfileScreen
 import com.restaurandes.presentation.search.SearchScreen
