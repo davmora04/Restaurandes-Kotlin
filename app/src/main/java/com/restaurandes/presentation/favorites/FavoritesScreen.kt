@@ -1,131 +1,354 @@
 package com.restaurandes.presentation.favorites
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.CardDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.compose.AsyncImage
 import com.restaurandes.domain.model.Restaurant
-import com.restaurandes.domain.repository.UserRepository
-import com.restaurandes.domain.usecase.GetRestaurantsUseCase
-import com.restaurandes.domain.usecase.ToggleFavoriteUseCase
-import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-data class FavoritesUiState(
-    val isLoading: Boolean = false,
-    val favorites: List<Restaurant> = emptyList(),
-    val favoriteIds: Set<String> = emptySet(),
-    val isLoggedIn: Boolean = true,
-    val error: String? = null
-)
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun FavoritesScreen(
+    onNavigateToDetail: (String) -> Unit,
+    onNavigateBack: () -> Unit,
+    viewModel: FavoritesViewModel = hiltViewModel()
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-@HiltViewModel
-class FavoritesViewModel @Inject constructor(
-    private val getRestaurantsUseCase: GetRestaurantsUseCase,
-    private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
-    private val userRepository: UserRepository
-) : ViewModel() {
-
-    private val _uiState = MutableStateFlow(FavoritesUiState(isLoading = true))
-    val uiState: StateFlow<FavoritesUiState> = _uiState.asStateFlow()
-
-    init {
-        observeUserFavorites()
-    }
-
-    private fun observeUserFavorites() {
-        viewModelScope.launch {
-            userRepository.observeCurrentUser().collectLatest { user ->
-                if (user == null) {
-                    _uiState.value = FavoritesUiState(
-                        isLoading = false,
-                        favorites = emptyList(),
-                        favoriteIds = emptySet(),
-                        isLoggedIn = false,
-                        error = "Debes iniciar sesión para ver tus favoritos."
-                    )
-                    return@collectLatest
-                }
-
-                loadFavorites(user.favoriteRestaurants)
-            }
-        }
-    }
-
-    fun refresh() {
-        viewModelScope.launch {
-            val user = userRepository.getCurrentUser().getOrNull()
-            if (user == null) {
-                _uiState.value = FavoritesUiState(
-                    isLoading = false,
-                    favorites = emptyList(),
-                    favoriteIds = emptySet(),
-                    isLoggedIn = false,
-                    error = "Debes iniciar sesión para ver tus favoritos."
-                )
-            } else {
-                loadFavorites(user.favoriteRestaurants)
-            }
-        }
-    }
-
-    private suspend fun loadFavorites(favoriteRestaurantIds: List<String>) {
-        _uiState.value = _uiState.value.copy(
-            isLoading = true,
-            error = null,
-            favoriteIds = favoriteRestaurantIds.toSet(),
-            isLoggedIn = true
-        )
-
-        getRestaurantsUseCase().fold(
-            onSuccess = { restaurants ->
-                val favorites = restaurants.filter { it.id in favoriteRestaurantIds }
-                _uiState.value = FavoritesUiState(
-                    isLoading = false,
-                    favorites = favorites,
-                    favoriteIds = favoriteRestaurantIds.toSet(),
-                    isLoggedIn = true,
-                    error = null
-                )
-            },
-            onFailure = { exception ->
-                _uiState.value = FavoritesUiState(
-                    isLoading = false,
-                    favorites = emptyList(),
-                    favoriteIds = favoriteRestaurantIds.toSet(),
-                    isLoggedIn = true,
-                    error = exception.message ?: "No se pudieron cargar los favoritos."
-                )
-            }
-        )
-    }
-
-    fun toggleFavorite(restaurantId: String) {
-        val isFavorite = _uiState.value.favoriteIds.contains(restaurantId)
-
-        viewModelScope.launch {
-            toggleFavoriteUseCase(restaurantId, isFavorite).fold(
-                onSuccess = {
-                    val newFavoriteIds = _uiState.value.favoriteIds.toMutableSet().apply {
-                        if (isFavorite) remove(restaurantId) else add(restaurantId)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Favorites", fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
-
-                    val newFavorites = _uiState.value.favorites.filter { it.id != restaurantId }
-
-                    _uiState.value = _uiState.value.copy(
-                        favoriteIds = newFavoriteIds,
-                        favorites = newFavorites
-                    )
-                },
-                onFailure = { exception ->
-                    _uiState.value = _uiState.value.copy(
-                        error = exception.message ?: "No se pudo actualizar el favorito."
-                    )
                 }
             )
+        }
+    ) { paddingValues ->
+        when {
+            uiState.isLoading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+
+            !uiState.isLoggedIn -> {
+                EmptyFavoritesView(
+                    title = "No has iniciado sesión",
+                    message = uiState.error ?: "Debes iniciar sesión para ver tus favoritos.",
+                    buttonText = "Volver",
+                    onAction = onNavigateBack,
+                    paddingValues = paddingValues
+                )
+            }
+
+            uiState.error != null && uiState.favorites.isEmpty() -> {
+                ErrorFavoritesView(
+                    error = uiState.error ?: "Error desconocido",
+                    onRetry = viewModel::refresh,
+                    paddingValues = paddingValues
+                )
+            }
+
+            uiState.favorites.isEmpty() -> {
+                EmptyFavoritesView(
+                    title = "Aún no tienes favoritos",
+                    message = "Guarda restaurantes tocando el corazón en el detalle para verlos aquí.",
+                    buttonText = "Recargar",
+                    onAction = viewModel::refresh,
+                    paddingValues = paddingValues
+                )
+            }
+
+            else -> {
+                FavoritesList(
+                    favorites = uiState.favorites,
+                    onRestaurantClick = onNavigateToDetail,
+                    onRemoveFavorite = viewModel::toggleFavorite,
+                    paddingValues = paddingValues
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FavoritesList(
+    favorites: List<Restaurant>,
+    onRestaurantClick: (String) -> Unit,
+    onRemoveFavorite: (String) -> Unit,
+    paddingValues: PaddingValues
+) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        item {
+            Text(
+                text = "${favorites.size} restaurante(s) favorito(s)",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Toca una tarjeta para abrir el detalle.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        items(favorites, key = { it.id }) { restaurant ->
+            FavoriteRestaurantCard(
+                restaurant = restaurant,
+                onClick = { onRestaurantClick(restaurant.id) },
+                onRemoveFavorite = { onRemoveFavorite(restaurant.id) }
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FavoriteRestaurantCard(
+    restaurant: Restaurant,
+    onClick: () -> Unit,
+    onRemoveFavorite: () -> Unit
+) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AsyncImage(
+                model = restaurant.imageUrl,
+                contentDescription = restaurant.name,
+                modifier = Modifier.size(84.dp),
+                contentScale = ContentScale.Crop
+            )
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = restaurant.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = restaurant.category,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = "Rating",
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(2.dp))
+                        Text(
+                            text = "${restaurant.rating}",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+
+                    Text(
+                        text = restaurant.priceRange,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium
+                    )
+
+                    Text(
+                        text = if (restaurant.isCurrentlyOpen()) "Open" else "Closed",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (restaurant.isCurrentlyOpen()) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.error
+                        },
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+
+            IconButton(onClick = onRemoveFavorite) {
+                Icon(
+                    imageVector = Icons.Default.Favorite,
+                    contentDescription = "Remove favorite",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = "Go to detail",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun EmptyFavoritesView(
+    title: String,
+    message: String,
+    buttonText: String,
+    onAction: () -> Unit,
+    paddingValues: PaddingValues
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.FavoriteBorder,
+            contentDescription = null,
+            modifier = Modifier.size(72.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        OutlinedButton(onClick = onAction) {
+            Text(buttonText)
+        }
+    }
+}
+
+@Composable
+private fun ErrorFavoritesView(
+    error: String,
+    onRetry: () -> Unit,
+    paddingValues: PaddingValues
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            imageVector = Icons.Default.Error,
+            contentDescription = null,
+            modifier = Modifier.size(72.dp),
+            tint = MaterialTheme.colorScheme.error
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "No se pudieron cargar los favoritos",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = error,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        OutlinedButton(onClick = onRetry) {
+            Text("Reintentar")
         }
     }
 }
