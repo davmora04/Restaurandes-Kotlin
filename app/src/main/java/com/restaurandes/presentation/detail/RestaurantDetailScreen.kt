@@ -1,5 +1,8 @@
 package com.restaurandes.presentation.detail
 
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -10,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -103,6 +107,8 @@ private fun RestaurantDetailContent(
     onNavigateToCompare: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -247,6 +253,24 @@ private fun RestaurantDetailContent(
 
             HorizontalDivider()
 
+            Button(
+                onClick = {
+                    openDirections(
+                        context = context,
+                        latitude = restaurant.latitude,
+                        longitude = restaurant.longitude,
+                        restaurantName = restaurant.name
+                    )
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Default.Directions, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Get Directions")
+            }
+
+            HorizontalDivider()
+
             // Action Buttons
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -271,6 +295,41 @@ private fun RestaurantDetailContent(
                 }
             }
         }
+    }
+}
+
+private fun openDirections(
+    context: android.content.Context,
+    latitude: Double,
+    longitude: Double,
+    restaurantName: String
+) {
+    val googleMapsIntent = Intent(
+        Intent.ACTION_VIEW,
+        Uri.parse("google.navigation:q=$latitude,$longitude")
+    ).apply {
+        setPackage("com.google.android.apps.maps")
+    }
+
+    val geoIntent = Intent(
+        Intent.ACTION_VIEW,
+        Uri.parse("geo:$latitude,$longitude?q=$latitude,$longitude(${Uri.encode(restaurantName)})")
+    )
+
+    val resolvedIntent = when {
+        googleMapsIntent.resolveActivity(context.packageManager) != null -> googleMapsIntent
+        geoIntent.resolveActivity(context.packageManager) != null -> geoIntent
+        else -> null
+    }
+
+    if (resolvedIntent != null) {
+        context.startActivity(resolvedIntent)
+    } else {
+        Toast.makeText(
+            context,
+            "No map application found on this device.",
+            Toast.LENGTH_SHORT
+        ).show()
     }
 }
 

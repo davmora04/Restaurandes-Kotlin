@@ -1,8 +1,6 @@
 package com.restaurandes.data.repository
 
 import com.google.firebase.firestore.FirebaseFirestore
-import com.restaurandes.data.remote.api.RestaurantApi
-import com.restaurandes.data.remote.dto.toDomain
 import com.restaurandes.domain.model.Restaurant
 import com.restaurandes.domain.repository.RestaurantRepository
 import kotlinx.coroutines.channels.awaitClose
@@ -13,7 +11,6 @@ import javax.inject.Inject
 import kotlin.math.*
 
 class RestaurantRepositoryImpl @Inject constructor(
-    private val api: RestaurantApi,
     private val firestore: FirebaseFirestore
 ) : RestaurantRepository {
 
