@@ -1,9 +1,11 @@
 package com.restaurandes.data.repository
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
-import android.location.LocationManager
 import android.os.Looper
+import androidx.core.content.ContextCompat
+import android.content.pm.PackageManager
 import com.google.android.gms.location.*
 import com.restaurandes.domain.model.Location
 import com.restaurandes.domain.repository.LocationRepository
@@ -104,8 +106,13 @@ class LocationRepositoryImpl @Inject constructor(
     }
 
     override fun hasLocationPermission(): Boolean {
-        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
-                locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+        return ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED ||
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
     }
 }
