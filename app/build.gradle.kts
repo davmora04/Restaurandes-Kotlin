@@ -100,11 +100,13 @@ dependencies {
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-firestore-ktx")
 
-    // Google Play Services
+    // Google Maps / Location
     implementation("com.google.android.gms:play-services-location:21.3.0")
     implementation("com.google.android.gms:play-services-maps:19.0.0")
-    
-    // Coil for image loading
+    implementation("com.google.maps.android:maps-compose:4.4.1")
+    implementation("com.google.accompanist:accompanist-permissions:0.34.0")
+
+    // Coil
     implementation("io.coil-kt.coil3:coil-compose:3.0.0-rc01")
     implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.0-rc01")
 

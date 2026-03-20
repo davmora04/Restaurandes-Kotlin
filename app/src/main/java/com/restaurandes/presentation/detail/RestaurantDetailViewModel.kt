@@ -75,14 +75,12 @@ class RestaurantDetailViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val currentUser = userRepository.getCurrentUser().getOrNull()
-                val userId = currentUser?.id ?: return@launch
+                currentUser?.id ?: return@launch
                 
                 if (isFavorite) {
                     userRepository.removeFavoriteRestaurant(restaurant.id)
                 } else {
                     userRepository.addFavoriteRestaurant(restaurant.id)
-                    // Track favorite for BQ3
-                    analyticsService.logRestaurantFavorited(restaurant.id, restaurant.name, userId)
                 }
                 _uiState.value = _uiState.value.copy(isFavorite = !isFavorite)
             } catch (e: Exception) {

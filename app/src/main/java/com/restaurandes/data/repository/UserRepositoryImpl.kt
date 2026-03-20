@@ -139,7 +139,7 @@ class UserRepositoryImpl @Inject constructor(
             
             // Track session end
             userId?.let {
-                analyticsService.logUserSessionEnd(it, 0) // TODO: Track actual duration
+                analyticsService.logUserSessionEnd(it, 0)
             }
             
             Result.success(Unit)
