@@ -1,21 +1,7 @@
 # Restaurandes - Campus Food Discovery App
 
 ## Overview
-Restaurandes is a mobile platform that centralizes and standardizes information about food establishments on and around campus, helping students and professors discover, compare, and select dining options efficiently.
-
-## Project Status
-🚧 **Sprint 2 - In Development**
-
-## Features (Planned)
-- 🔍 Search and filter food establishments
-- 🗺️ Campus map with restaurant locations
-- ⭐ Ratings and reviews
-- 🕐 Real-time "Open Now" status
-- 📋 Menu highlights and pricing
-- ❤️ Favorites management
-- 🔄 Side-by-side comparison
-- 👤 User authentication
-- 📊 Analytics integration
+Restaurandes is a mobile platform that centralizes information about food establishments on and around campus, helping students and professors discover, compare, and select dining options efficiently.
 
 ## Tech Stack
 - **Language**: Kotlin
@@ -80,76 +66,46 @@ app/
 
 ### Clean Architecture Layers
 
-**Domain Layer** (Business Logic)
-- Pure Kotlin modules, framework-independent
+**Domain Layer**
+- Pure Kotlin, framework-independent
 - Models: `Restaurant`, `User`, `Review`, `Location`
 - Repository interfaces defining contracts
 - Use cases encapsulating business rules
 
-**Data Layer** (Data Sources)
+**Data Layer**
 - Repository implementations
-- Remote data sources (Retrofit API)
-- Local data sources (to be implemented)
+- Remote data sources (Firebase Firestore)
 - DTOs and mappers
 
-**Presentation Layer** (UI)
+**Presentation Layer**
 - MVVM pattern with Jetpack Compose
-- ViewModels managing UI state
+- ViewModels managing UI state via StateFlow
 - Composable functions for UI
 - Navigation component
 
 ### Dependencies
 - **Dagger Hilt**: Dependency injection
-- **Retrofit**: REST API client
+- **Firebase**: Auth, Firestore, Analytics
 - **Coil**: Image loading
 - **Google Play Services**: Location services
-- **Firebase** (to be configured): Analytics, Auth, Firestore
 
-## Current Implementation Status
-
-### ✅ Completed
-- Clean Architecture structure
-- Domain models and repository interfaces
-- Use cases for core features
-- Data layer with mock implementations
-- Home screen with restaurant listing
-- Filter system (All, Nearby, Open, Top Rated, Economic)
-- Login/Register screens
-- Navigation graph
-- Bottom navigation
-- Location repository with GPS sensor
-
-### 🚧 In Progress
-- Firebase integration (Analytics, Auth, Firestore)
-- Remaining screen implementations
-- Analytics tracking for BQs
-
-### 📋 To Do
-- Complete all screen implementations
-- Implement smart recommendation features
-- Add real backend API
-- Complete authentication flow
-- Implement analytics pipeline
-- Document architecture diagrams
+## Features
+- Search and filter food establishments
+- Campus map with restaurant locations
+- Ratings and reviews
+- Real-time open/closed status based on current time
+- Favorites management
+- Side-by-side restaurant comparison with smart suggestion
+- User authentication (Firebase Auth)
+- Analytics pipeline (Firebase Analytics) for business questions
 
 ## Business Questions (Sprint 2)
-
-1. **BQ1 - Type 1 (Telemetry)**: Weekly active users count
-2. **BQ2 - Type 2 (UX)**: Section interaction analytics
-3. **BQ3 - Type 3 (Feature)**: Restaurant view to favorite conversion rate
+1. **BQ1 - Type 1**: Weekly active users count
+2. **BQ2 - Type 2**: Section interaction analytics
+3. **BQ3 - Type 3**: Restaurant view to favorite conversion rate
 
 ## Team
-- Grupo 22 - Móviles
+Grupo 22 - Moviles
 
 ## License
 Educational project - Universidad de los Andes
-
-## Sprint 2 Requirements
-- [ ] Business Questions implementation
-- [ ] Analytics pipeline
-- [ ] Architectural design
-- [ ] Sensor integration
-- [ ] Context-aware features
-- [ ] Smart features
-- [ ] User authentication
-- [ ] External services integration
