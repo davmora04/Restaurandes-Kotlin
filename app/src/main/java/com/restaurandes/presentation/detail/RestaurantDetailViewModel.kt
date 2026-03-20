@@ -38,17 +38,15 @@ class RestaurantDetailViewModel @Inject constructor(
                 val result = restaurantRepository.getRestaurantById(restaurantId)
                 result.fold(
                     onSuccess = { restaurant ->
-                        // Check if favorite
                         val currentUser = userRepository.getCurrentUser().getOrNull()
                         val isFavorite = currentUser?.favoriteRestaurants?.contains(restaurantId) == true
-                        
+
                         _uiState.value = RestaurantDetailUiState(
                             restaurant = restaurant,
                             isFavorite = isFavorite,
                             isLoading = false
                         )
-                        
-                        // Track view for BQ3
+
                         val userId = currentUser?.id
                         analyticsService.logRestaurantView(restaurantId, restaurant.name, userId)
                     },
@@ -83,8 +81,7 @@ class RestaurantDetailViewModel @Inject constructor(
                     userRepository.addFavoriteRestaurant(restaurant.id)
                 }
                 _uiState.value = _uiState.value.copy(isFavorite = !isFavorite)
-            } catch (e: Exception) {
-                // Handle error silently or show snackbar
+            } catch (_: Exception) {
             }
         }
     }

@@ -26,7 +26,6 @@ class HomeViewModel @Inject constructor(
 
     init {
         loadRestaurants()
-        // Track BQ2: Home section view
         analyticsService.logSectionView(AnalyticsService.AppSection.HOME, null)
     }
 
@@ -36,7 +35,6 @@ class HomeViewModel @Inject constructor(
             
             getRestaurantsUseCase().fold(
                 onSuccess = { restaurants ->
-                    // Extract unique categories
                     val categories = restaurants.map { it.category }.distinct().sorted()
                     
                     _uiState.update {
@@ -67,7 +65,6 @@ class HomeViewModel @Inject constructor(
             
             getNearbyRestaurantsUseCase(radiusKm = 5.0).fold(
                 onSuccess = { restaurants ->
-                    // Extract unique categories
                     val categories = restaurants.map { it.category }.distinct().sorted()
                     
                     _uiState.update {
@@ -96,8 +93,6 @@ class HomeViewModel @Inject constructor(
     fun filterByCategory(category: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(selectedCategory = category) }
-            
-            // Track BQ2: Filter interaction
             analyticsService.logFilterUsed(category, null)
             analyticsService.logSectionInteraction(
                 AnalyticsService.AppSection.HOME,
@@ -119,7 +114,6 @@ class HomeViewModel @Inject constructor(
     }
     
     fun onRestaurantClick(restaurantId: String, restaurantName: String) {
-        // Track BQ3: Restaurant view
         analyticsService.logRestaurantView(restaurantId, restaurantName, null)
     }
 }

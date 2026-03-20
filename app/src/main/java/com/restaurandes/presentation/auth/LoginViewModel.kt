@@ -27,16 +27,14 @@ class LoginViewModel @Inject constructor(
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
     fun login(email: String, password: String) {
-        // Limpiar espacios en blanco
         val cleanEmail = email.trim().lowercase()
         val cleanPassword = password.trim()
-        
+
         if (cleanEmail.isBlank() || cleanPassword.isBlank()) {
             _uiState.value = _uiState.value.copy(error = "Email y contraseña son requeridos")
             return
         }
 
-        // Validar formato de email
         if (!isValidEmail(cleanEmail)) {
             _uiState.value = _uiState.value.copy(error = "El email debe tener formato válido (ejemplo: usuario@correo.com)")
             return
@@ -49,7 +47,6 @@ class LoginViewModel @Inject constructor(
                 val result = userRepository.signIn(cleanEmail, cleanPassword)
                 result.fold(
                     onSuccess = { user ->
-                        // Analytics handled by repository
                         _uiState.value = LoginUiState(isSuccess = true)
                     },
                     onFailure = { error ->

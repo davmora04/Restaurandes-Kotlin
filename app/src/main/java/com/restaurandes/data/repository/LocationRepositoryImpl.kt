@@ -48,7 +48,6 @@ class LocationRepositoryImpl @Inject constructor(
                                 )
                             )
                         } else {
-                            // Default to Universidad de los Andes campus
                             continuation.resume(
                                 Result.success(
                                     Location(
@@ -77,7 +76,7 @@ class LocationRepositoryImpl @Inject constructor(
 
         val locationRequest = LocationRequest.Builder(
             Priority.PRIORITY_HIGH_ACCURACY,
-            10000L // 10 seconds
+            10000L
         ).build()
 
         val locationCallback = object : LocationCallback() {

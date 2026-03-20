@@ -27,19 +27,16 @@ class RegisterViewModel @Inject constructor(
     val uiState: StateFlow<RegisterUiState> = _uiState.asStateFlow()
 
     fun register(name: String, email: String, password: String, confirmPassword: String) {
-        // Limpiar espacios en blanco
         val cleanName = name.trim()
         val cleanEmail = email.trim().lowercase()
         val cleanPassword = password.trim()
         val cleanConfirmPassword = confirmPassword.trim()
-        
-        // Validaciones
+
         if (cleanName.isBlank() || cleanEmail.isBlank() || cleanPassword.isBlank()) {
             _uiState.value = _uiState.value.copy(error = "Todos los campos son requeridos")
             return
         }
 
-        // Validar formato de email
         if (!isValidEmail(cleanEmail)) {
             _uiState.value = _uiState.value.copy(error = "El email debe tener formato válido (ejemplo: usuario@correo.com)")
             return
@@ -62,7 +59,6 @@ class RegisterViewModel @Inject constructor(
                 val result = userRepository.signUp(cleanEmail, cleanPassword, cleanName)
                 result.fold(
                     onSuccess = { user ->
-                        // Analytics handled by repository
                         _uiState.value = RegisterUiState(isSuccess = true)
                     },
                     onFailure = { error ->

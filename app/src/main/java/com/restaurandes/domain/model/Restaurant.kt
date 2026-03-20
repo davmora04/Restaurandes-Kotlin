@@ -20,9 +20,6 @@ data class Restaurant(
     val tags: List<String> = emptyList(), // vegetarian, vegan, gluten-free, etc.
     val reviewCount: Int = 0
 ) {
-    /**
-     * Calcula si el restaurante está abierto comparando openingHours con la hora actual.
-     */
     fun isCurrentlyOpen(): Boolean {
         return try {
             val hours = openingHours.trim()

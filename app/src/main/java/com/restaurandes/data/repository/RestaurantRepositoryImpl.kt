@@ -20,19 +20,13 @@ class RestaurantRepositoryImpl @Inject constructor(
 
     override suspend fun getRestaurants(): Result<List<Restaurant>> {
         return try {
-            android.util.Log.d("RestaurantRepo", "Fetching restaurants from Firestore...")
             val snapshot = firestore.collection(COLLECTION_RESTAURANTS)
                 .get()
                 .await()
-            
-            android.util.Log.d("RestaurantRepo", "Snapshot size: ${snapshot.documents.size}")
-            
+
             val restaurants = snapshot.documents.mapNotNull { doc ->
                 try {
-                    android.util.Log.d("RestaurantRepo", "Parsing doc: ${doc.id}")
-                    android.util.Log.d("RestaurantRepo", "All fields: ${doc.data}")
                     val imageUrl = doc.getString("imageURL") ?: ""
-                    android.util.Log.d("RestaurantRepo", "Image URL: '$imageUrl'")
                     Restaurant(
                         id = doc.id,
                         name = doc.getString("name") ?: "",
@@ -52,15 +46,12 @@ class RestaurantRepositoryImpl @Inject constructor(
                         reviewCount = doc.getLong("reviewCount")?.toInt() ?: 0
                     )
                 } catch (e: Exception) {
-                    android.util.Log.e("RestaurantRepo", "Error parsing doc: ${doc.id}", e)
                     null
                 }
             }
-            
-            android.util.Log.d("RestaurantRepo", "Successfully loaded ${restaurants.size} restaurants")
+
             Result.success(restaurants)
         } catch (e: Exception) {
-            android.util.Log.e("RestaurantRepo", "Error fetching restaurants", e)
             Result.failure(e)
         }
     }
@@ -102,8 +93,6 @@ class RestaurantRepositoryImpl @Inject constructor(
 
     override suspend fun searchRestaurants(query: String): Result<List<Restaurant>> {
         return try {
-            // Get all restaurants and filter in memory
-            // Note: For production, consider using Algolia or Elasticsearch for better search
             val allRestaurants = getRestaurants().getOrNull() ?: emptyList()
             
             val filtered = allRestaurants.filter { restaurant ->
@@ -162,8 +151,6 @@ class RestaurantRepositoryImpl @Inject constructor(
         radiusKm: Double
     ): Result<List<Restaurant>> {
         return try {
-            // Get all restaurants and filter by distance
-            // Note: For production with many restaurants, consider using GeoFirestore
             val allRestaurants = getRestaurants().getOrNull() ?: emptyList()
             
             val nearby = allRestaurants.filter { restaurant ->
